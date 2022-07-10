@@ -1,4 +1,51 @@
-<HTML>
-  <body>tesst</body>
-  tesst
-</HTML>
+<!DOCTYPE html>
+<html>
+<body>
+<style>
+  body {
+  background-color: #000000;
+  color: #999999;
+   }
+   div{
+  white-space: pre-line;
+    font-size:8vw;
+  }
+  button{
+  border: none;
+  background-color: #333333;
+  color: #999999;
+    font-size:8vw;
+  }
+</style>
+<div id="container">
+</div>
+<script>
+function AddPage(name, text) {
+	var page = {};
+    page.text = text;
+    	page.options = {};
+    page.Add = function(name, text)
+    {
+    	page.options[name] = text;
+        return page;
+    };
+    book[name] = page;
+	return page;
+}
+function Goto(name) {
+  const div = document.getElementById('container');
+  const page = book[name];
+	div.innerHTML = page.text+"\n";
+    for (var key in page.options) {
+  		div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key]+"</button>\n";
+	}
+}
+var book = {};
+AddPage("start", "Knack Knack!\nDet knackar på dörren").Add("door", "öppna dörren").Add("window", "titta genom fönstret");
+AddPage("door", "Slut!");
+AddPage("window", "Det står något stort utanför").Add("door", "öppna ändå");
+Goto("start");
+</script>
+</body>
+</html>
+
