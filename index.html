@@ -11,8 +11,9 @@
     font-size:8vw;
   }
   button{
-  border: none;
-  background-color: #333333;
+  border: 0.5vw solid #999999; 
+ margin:1vw;
+ background-color: #333333;
   color: #999999;
     font-size:8vw;
   }
@@ -42,10 +43,9 @@ function Goto(name) {
 }
 var book = {};
 AddPage("start", "Knack Knack!\nDet knackar på dörren").Add("door", "öppna dörren").Add("window", "titta genom fönstret");
-AddPage("door", "Slut!");
+AddPage("door", "Ingen där!").Add("start", "stäng dörren");
 AddPage("window", "Det står något stort utanför").Add("door", "öppna ändå");
 Goto("start");
 </script>
 </body>
 </html>
-
