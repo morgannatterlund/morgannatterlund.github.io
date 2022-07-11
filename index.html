@@ -2,6 +2,37 @@
 <html>
 <body>
 <style>
+ul, #myUL {
+  list-style-type: none;
+}
+* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+  display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+  display: block;
+}
   body {
   background-color: #000000;
   color: #999999;
@@ -17,35 +48,171 @@
   color: #999999;
     font-size:8vw;
   }
+  #myUL{
+  border: 0.5vw solid #999999; 
+ margin:1vw;
+ background-color: #333333;
+  color: #999999;
+    font-size:2vw;
+  }
+  input{
+  border: 0.5vw solid #999999; 
+ margin:1vw;
+ background-color: #333333;
+  color: #999999;
+    font-size:2vw;
+  }
+  select{
+  border: 0.5vw solid #999999; 
+ margin:1vw;
+ background-color: #333333;
+  color: #999999;
+    font-size:2vw;
+  }
+  textarea {
+  border: 0.5vw solid #333333; 
+ 	background-color: #999999;
+  	color: #333333;
+	}
+  .footer {
+  border: 0.5vw solid #999999; 
+ background-color: #336633;
+    }
 </style>
+<!--<input type="file" id="file-selector"\>
+<input type="button" onclick="SaveJson()" value="Save"\>
+const fileSelector = document.getElementById('file-selector');
+  fileSelector.addEventListener('change', (event) => {
+    const div = document.getElementById('container');
+    var fr=new FileReader();
+    fr.onload=function(){
+      div.innerHTML = fr.result;
+    }
+	fr.readAsText(event.target.files[0]);
+  });
+ function SaveJson()
+ {
+ var a = document.createElement("a");
+ var content = JSON.stringify(book, null, '\t');
+	a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
+a.download = "demo.txt";
+a.click();
+ }
+-->
+<input type="button" onclick="ToggleEditor()" value="editor"\>
+<div id="editor" class="footer">
+</div>
 <div id="container">
 </div>
 <script>
-function AddPage(name, text) {
-	var page = {};
+  var book = {};
+  var showEditor = false;
+
+  function ToggleEditor()
+  {
+  	showEditor = !showEditor;
+    UpdateEditor();
+  }
+  function UpdateEditor()
+  {
+  	if (showEditor)
+    {
+    	document.getElementById("editor").style.display = "block";
+    }
+    else
+    {
+    	document.getElementById("editor").style.display = "none";
+    }
+  }
+  function AddPage(name, text) 
+  {
+    var page = {};
     page.text = text;
-    	page.options = {};
+    page.options = {};
     page.Add = function(name, text)
     {
-    	page.options[name] = text;
-        return page;
+      page.options[name] = text;
+      return page;
     };
     book[name] = page;
-	return page;
-}
-function Goto(name) {
-  const div = document.getElementById('container');
-  const page = book[name];
-	div.innerHTML = page.text+"\n";
-    for (var key in page.options) {
-  		div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key]+"</button>\n";
-	}
-}
-var book = {};
-AddPage("start", "Knack Knack!\nDet knackar på dörren").Add("door", "öppna dörren").Add("window", "titta genom fönstret");
-AddPage("door", "Ingen där!").Add("start", "stäng dörren");
-AddPage("window", "Det står något stort utanför").Add("door", "öppna ändå");
-Goto("start");
+    return page;
+  }
+  function Goto(name) 
+  {
+    const div = document.getElementById('container');
+
+      const page = book[name];
+
+      div.innerHTML = page.text+"\n";
+      for (var key in page.options) {
+          div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key]+"</button>\n";
+      }
+  }
+  function CreateListView()
+  {
+    var ul = document.createElement("ul");
+    ul.id = "myUL";
+    ul.class="nested";
+    for (var key in book) 
+    {
+    	var li = document.createElement("li");
+        var span = document.createElement("span");
+        span.innerHTML = key;
+        span.class="caret";
+    	var ulInner = document.createElement("ul");
+    	ulInner.class="nested";
+        
+    	var textArea = document.createElement("textarea");
+        textArea.value = book[key].text;
+        
+        ulInner.appendChild(textArea);
+    	li.appendChild(span);
+    	li.appendChild(ulInner);
+    	ul.appendChild(li);
+    }
+    return ul;
+  }
+  function SetupEditor()
+  {
+    const div = document.getElementById('editor');
+    div.innerHTML = "";
+    div.appendChild(CreateListView());
+    var selectList = document.createElement("select");
+    selectList.id = "mySelect";
+    div.appendChild(selectList);
+
+    for (var key in book) {
+      	var option = document.createElement("option");
+        option.value = key;
+        option.text = key;
+        selectList.appendChild(option);
+    }
+    
+    var x = document.createElement("textarea");
+  	
+  	x.value = book[selectList.value].text;
+  	div.appendChild(x);
+    selectList.onchange = function(){
+    	x.value = book[selectList.value].text;	
+        Goto(selectList.value);
+    };
+    
+    x.onchange = function(){
+    	book[selectList.value].text = x.value;
+        Goto(selectList.value);	
+    };
+    UpdateEditor();
+  }
+  function SetDefault()
+  {
+    	book = {};
+    	AddPage("start", "Knack Knack!\nDet knackar på dörren").Add("door", "öppna dörren").Add("window", "titta genom fönstret");
+		AddPage("door", "Ingen där!").Add("start", "stäng dörren");
+		AddPage("window", "Det står något stort utanför").Add("door", "öppna ändå");
+      Goto("start");
+  }
+	SetDefault();
+    SetupEditor();
 </script>
 </body>
 </html>
