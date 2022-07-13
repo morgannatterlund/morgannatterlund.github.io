@@ -14,7 +14,7 @@ ul, #myUL {
 /* Create the caret/arrow with a unicode, and style it */
 .caret::before {
   content: "\25B6";
-  color: black;
+  color: #999999;
   display: inline-block;
   margin-right: 6px;
 }
@@ -49,6 +49,13 @@ ul, #myUL {
     font-size:8vw;
   }
   #myUL{
+  border: 0.5vw solid #999999; 
+ margin:1vw;
+ background-color: #333333;
+  color: #999999;
+    font-size:2vw;
+  }
+  .small{
   border: 0.5vw solid #999999; 
  margin:1vw;
  background-color: #333333;
@@ -126,12 +133,16 @@ a.click();
   }
   function AddPage(name, text) 
   {
+    if (book[name])
+     return book[name];
     var page = {};
     page.text = text;
     page.options = {};
     page.Add = function(name, text)
     {
-      page.options[name] = text;
+      var oprs = {};
+      oprs.text = text;
+      page.options[name]  = oprs;
       return page;
     };
     book[name] = page;
@@ -145,38 +156,77 @@ a.click();
 
       div.innerHTML = page.text+"\n";
       for (var key in page.options) {
-          div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key]+"</button>\n";
+          div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key].text+"</button>\n";
       }
   }
-  function CreateListView()
+  function CreateListView(div)
   {
+  
     var ul = document.createElement("ul");
-    ul.id = "myUL";
-    ul.class="nested";
-    for (var key in book) 
+  	var add =document.createElement("input");
+    var addBtn = document.createElement("button");
+    div.appendChild(add);
+    div.appendChild(addBtn);
+    div.appendChild(ul);
+    
+    var FillNodeView = function()
     {
-    	var li = document.createElement("li");
-        var span = document.createElement("span");
-        span.innerHTML = key;
-        span.class="caret";
-    	var ulInner = document.createElement("ul");
-    	ulInner.class="nested";
-        
-    	var textArea = document.createElement("textarea");
-        textArea.value = book[key].text;
-        
-        ulInner.appendChild(textArea);
-    	li.appendChild(span);
-    	li.appendChild(ulInner);
-    	ul.appendChild(li);
+    	ul.innerHTML = "";
+      for (var key in book) 
+      {
+          var li = document.createElement("li");
+          var span = document.createElement("span");
+    	  var ulInner = document.createElement("ul");
+          var rem = document.createElement("button");
+          var textArea = document.createElement("textarea");
+          li.appendChild(span);
+          li.appendChild(rem);
+          li.appendChild(ulInner);
+          ul.appendChild(li);
+          
+    	   
+          var page = book[key];
+      
+          span.innerHTML = key;
+          span.className="caret";
+          span.addEventListener("click", function() {
+            this.parentElement.querySelector(".nested").classList.toggle("active");
+            this.classList.toggle("caret-down");
+          });
+          ulInner.className="nested";
+
+          textArea.value = page.text;
+              rem.innerHTML = "REM";
+              rem.className="small";
+              rem.onClick = function() {
+
+              };
+          
+          ulInner.appendChild(textArea);
+        }
     }
-    return ul;
+    
+    addBtn.innerHTML = "ADD";
+    addBtn.className="small";
+    addBtn.onClick = function() {
+    	var name = add.value.trim();
+    	if (name.length)
+        {
+           	AddPage(name, "");
+            FillNodeView();
+            
+        }
+    };
+  	ul.id = "myUL";
+   	add.type = "text";
+    FillNodeView();
+    
   }
   function SetupEditor()
   {
     const div = document.getElementById('editor');
     div.innerHTML = "";
-    div.appendChild(CreateListView());
+    CreateListView(div);
     var selectList = document.createElement("select");
     selectList.id = "mySelect";
     div.appendChild(selectList);
