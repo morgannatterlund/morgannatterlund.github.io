@@ -56,11 +56,11 @@ ul, #myUL {
     font-size:2vw;
   }
   .small{
-  border: 0.5vw solid #999999; 
+  border: 0.2vw solid #999999; 
  margin:1vw;
  background-color: #333333;
   color: #999999;
-    font-size:2vw;
+    font-size:1vw;
   }
   input{
   border: 0.5vw solid #999999; 
@@ -113,8 +113,8 @@ a.click();
 </div>
 <script>
   var book = {};
-  var showEditor = false;
-
+  var showEditor = true;
+  var Active = "";
   function ToggleEditor()
   {
   	showEditor = !showEditor;
@@ -131,18 +131,23 @@ a.click();
     	document.getElementById("editor").style.display = "none";
     }
   }
+  function RemPage(name)
+  {
+  	delete book[name];
+  }
   function AddPage(name, text) 
   {
     if (book[name])
      return book[name];
     var page = {};
     page.text = text;
-    page.options = {};
+    page.options = [];
     page.Add = function(name, text)
     {
       var oprs = {};
       oprs.text = text;
-      page.options[name]  = oprs;
+      oprs.target = name;
+      page.options[page.options.length]  = oprs;
       return page;
     };
     book[name] = page;
@@ -150,13 +155,16 @@ a.click();
   }
   function Goto(name) 
   {
+  	Active = name;
     const div = document.getElementById('container');
 
       const page = book[name];
 
       div.innerHTML = page.text+"\n";
-      for (var key in page.options) {
-          div.innerHTML += "<button onclick=\"Goto('"+key+"')\">"+page.options[key].text+"</button>\n";
+      
+	for (var i = 0; i < page.options.length; i++) {
+          	let opts = page.options[i];
+          div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
       }
   }
   function CreateListView(div)
@@ -172,43 +180,94 @@ a.click();
     var FillNodeView = function()
     {
     	ul.innerHTML = "";
-      for (var key in book) 
+      for (let key in book) 
       {
-          var li = document.createElement("li");
-          var span = document.createElement("span");
-    	  var ulInner = document.createElement("ul");
-          var rem = document.createElement("button");
-          var textArea = document.createElement("textarea");
+          let li = document.createElement("li");
+          let span = document.createElement("span");
+    	  let ulInner = document.createElement("ul");
+          let rem = document.createElement("button");
+          let add = document.createElement("button");
+          let textArea = document.createElement("textarea");
+          let page = book[key];
           li.appendChild(span);
           li.appendChild(rem);
           li.appendChild(ulInner);
           ul.appendChild(li);
-          
-    	   
-          var page = book[key];
-      
+          ulInner.appendChild(textArea);
+          ulInner.appendChild(add);
+	      ulInner.appendChild(document.createElement("br"));
           span.innerHTML = key;
           span.className="caret";
-          span.addEventListener("click", function() {
-            this.parentElement.querySelector(".nested").classList.toggle("active");
-            this.classList.toggle("caret-down");
-          });
+          let expand = function() { 
+          	ulInner.classList.toggle("active");
+            span.classList.toggle("caret-down");
+            page.active = span.classList.contains("caret-down");
+          };
+          span.addEventListener("click", expand);
           ulInner.className="nested";
 
           textArea.value = page.text;
-              rem.innerHTML = "REM";
-              rem.className="small";
-              rem.onClick = function() {
+            textArea.onchange = function(){
+                page.text = textArea.value;
+                Goto(Active);
+            };
+          rem.innerHTML = "REM";
+          rem.className="small";
+          rem.onclick = function() {
+            RemPage(key);
+            Goto(Active);
+            FillNodeView();
+          };
+          add.innerHTML = "ADD Option";
+          add.className="small";
+          add.onclick =function()
+          {
+          	 page.Add(Object.keys(book)[0], "");
+             Goto(Active);
+             FillNodeView();
+          };
+		 for (let i = 0; i < page.options.length; i++) {
+          	let opts = page.options[i];
+           	let x = document.createElement("textarea");
+            let selectList = document.createElement("select");
+          	let rem2 = document.createElement("button");
+          	ulInner.appendChild(x);
+            ulInner.appendChild(selectList);
+            ulInner.appendChild(rem2);
+	      	ulInner.appendChild(document.createElement("br"));
+			for (let key2 in book) {
+                let option = document.createElement("option");
+                option.value = key2;
+                option.text = key2;
+                selectList.appendChild(option);
+            }
+           	selectList.value = opts.target;
+            x.value = opts.text;
+            selectList.onchange = function(){
+            };
+            x.onchange = function(){
+                opts.text = x.value;
+                Goto(Active);
+            };
+            rem2.innerHTML = "REM";
+            rem2.className="small";
+            rem2.onclick = function() {
+              page.options.splice(i,1);
+              Goto(Active);
+              FillNodeView();
+            };
 
-              };
-          
-          ulInner.appendChild(textArea);
+          }
+          if (page.active)
+          {
+          	expand();
+          }
         }
     }
     
     addBtn.innerHTML = "ADD";
     addBtn.className="small";
-    addBtn.onClick = function() {
+    addBtn.onclick = function() {
     	var name = add.value.trim();
     	if (name.length)
         {
@@ -227,30 +286,6 @@ a.click();
     const div = document.getElementById('editor');
     div.innerHTML = "";
     CreateListView(div);
-    var selectList = document.createElement("select");
-    selectList.id = "mySelect";
-    div.appendChild(selectList);
-
-    for (var key in book) {
-      	var option = document.createElement("option");
-        option.value = key;
-        option.text = key;
-        selectList.appendChild(option);
-    }
-    
-    var x = document.createElement("textarea");
-  	
-  	x.value = book[selectList.value].text;
-  	div.appendChild(x);
-    selectList.onchange = function(){
-    	x.value = book[selectList.value].text;	
-        Goto(selectList.value);
-    };
-    
-    x.onchange = function(){
-    	book[selectList.value].text = x.value;
-        Goto(selectList.value);	
-    };
     UpdateEditor();
   }
   function SetDefault()
