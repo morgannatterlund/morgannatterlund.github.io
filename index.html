@@ -118,18 +118,7 @@ a.click();
   function ToggleEditor()
   {
   	showEditor = !showEditor;
-    UpdateEditor();
-  }
-  function UpdateEditor()
-  {
-  	if (showEditor)
-    {
-    	document.getElementById("editor").style.display = "block";
-    }
-    else
-    {
-    	document.getElementById("editor").style.display = "none";
-    }
+    UpdateBook();
   }
   function RemPage(name)
   {
@@ -155,6 +144,10 @@ a.click();
   }
   function Goto(name) 
   {
+  	if (!name || name==="")
+    {
+    	name = Object.keys(book)[0];
+    }
   	Active = name;
     const div = document.getElementById('container');
 
@@ -167,137 +160,154 @@ a.click();
           div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
       }
   }
-  function CreateListView(div)
+  function UpdateListView()
   {
-  
+    const ul = document.getElementById('myUL');
+    ul.innerHTML = "";
+    for (let key in book) 
+    {
+      let li = document.createElement("li");
+      let span = document.createElement("span");
+      let ulInner = document.createElement("ul");
+      let rem = document.createElement("button");
+      let add = document.createElement("button");
+      let textArea = document.createElement("textarea");
+      let page = book[key];
+      li.appendChild(span);
+      li.appendChild(rem);
+      li.appendChild(ulInner);
+      ul.appendChild(li);
+      ulInner.appendChild(textArea);
+      ulInner.appendChild(add);
+      ulInner.appendChild(document.createElement("br"));
+      span.innerHTML = key;
+      span.className="caret";
+      let expand = function() { 
+        ulInner.classList.toggle("active");
+        span.classList.toggle("caret-down");
+        page.active = span.classList.contains("caret-down");
+      };
+      span.addEventListener("click", expand);
+      ulInner.className="nested";
+
+      textArea.value = page.text;
+      textArea.onchange = function(){
+        page.text = textArea.value;
+        UpdateBook();
+      };
+      rem.innerHTML = "REM";
+      rem.className="small";
+      rem.onclick = function() {
+        RemPage(key);
+        UpdateBook();
+      };
+      add.innerHTML = "ADD Option";
+      add.className="small";
+      add.onclick =function()
+      {
+        page.Add(Object.keys(book)[0], "option");
+        UpdateBook();
+      };
+      for (let i = 0; i < page.options.length; i++) {
+        let opts = page.options[i];
+        let x = document.createElement("textarea");
+        let selectList = document.createElement("select");
+        let rem2 = document.createElement("button");
+        ulInner.appendChild(x);
+        ulInner.appendChild(selectList);
+        ulInner.appendChild(rem2);
+        ulInner.appendChild(document.createElement("br"));
+        for (let key2 in book) {
+          let option = document.createElement("option");
+          option.value = key2;
+          option.text = key2;
+          selectList.appendChild(option);
+        }
+        selectList.value = opts.target;
+        x.value = opts.text;
+        selectList.onchange = function(){
+        };
+        x.onchange = function(){
+          opts.text = x.value;
+          UpdateBook();
+        };
+        rem2.innerHTML = "REM";
+        rem2.className="small";
+        rem2.onclick = function() {
+          page.options.splice(i,1);
+          UpdateBook();          
+        };
+
+      }
+      if (page.active)
+      {
+        expand();
+      }
+    }
+  }
+  function SetupEditor()
+  {
+    const div = document.getElementById('editor');
     var ul = document.createElement("ul");
   	var add =document.createElement("input");
     var addBtn = document.createElement("button");
+    div.innerHTML = "";
     div.appendChild(add);
     div.appendChild(addBtn);
     div.appendChild(ul);
-    
-    var FillNodeView = function()
-    {
-    	ul.innerHTML = "";
-      for (let key in book) 
-      {
-          let li = document.createElement("li");
-          let span = document.createElement("span");
-    	  let ulInner = document.createElement("ul");
-          let rem = document.createElement("button");
-          let add = document.createElement("button");
-          let textArea = document.createElement("textarea");
-          let page = book[key];
-          li.appendChild(span);
-          li.appendChild(rem);
-          li.appendChild(ulInner);
-          ul.appendChild(li);
-          ulInner.appendChild(textArea);
-          ulInner.appendChild(add);
-	      ulInner.appendChild(document.createElement("br"));
-          span.innerHTML = key;
-          span.className="caret";
-          let expand = function() { 
-          	ulInner.classList.toggle("active");
-            span.classList.toggle("caret-down");
-            page.active = span.classList.contains("caret-down");
-          };
-          span.addEventListener("click", expand);
-          ulInner.className="nested";
-
-          textArea.value = page.text;
-            textArea.onchange = function(){
-                page.text = textArea.value;
-                Goto(Active);
-            };
-          rem.innerHTML = "REM";
-          rem.className="small";
-          rem.onclick = function() {
-            RemPage(key);
-            Goto(Active);
-            FillNodeView();
-          };
-          add.innerHTML = "ADD Option";
-          add.className="small";
-          add.onclick =function()
-          {
-          	 page.Add(Object.keys(book)[0], "");
-             Goto(Active);
-             FillNodeView();
-          };
-		 for (let i = 0; i < page.options.length; i++) {
-          	let opts = page.options[i];
-           	let x = document.createElement("textarea");
-            let selectList = document.createElement("select");
-          	let rem2 = document.createElement("button");
-          	ulInner.appendChild(x);
-            ulInner.appendChild(selectList);
-            ulInner.appendChild(rem2);
-	      	ulInner.appendChild(document.createElement("br"));
-			for (let key2 in book) {
-                let option = document.createElement("option");
-                option.value = key2;
-                option.text = key2;
-                selectList.appendChild(option);
-            }
-           	selectList.value = opts.target;
-            x.value = opts.text;
-            selectList.onchange = function(){
-            };
-            x.onchange = function(){
-                opts.text = x.value;
-                Goto(Active);
-            };
-            rem2.innerHTML = "REM";
-            rem2.className="small";
-            rem2.onclick = function() {
-              page.options.splice(i,1);
-              Goto(Active);
-              FillNodeView();
-            };
-
-          }
-          if (page.active)
-          {
-          	expand();
-          }
-        }
-    }
-    
     addBtn.innerHTML = "ADD";
     addBtn.className="small";
     addBtn.onclick = function() {
     	var name = add.value.trim();
     	if (name.length)
         {
-           	AddPage(name, "");
-            FillNodeView();
-            
+           	AddPage(name, "page");
+  			UpdateBook();          
         }
     };
   	ul.id = "myUL";
    	add.type = "text";
-    FillNodeView();
     
+    UpdateListView();
   }
-  function SetupEditor()
+  function UpdateBook()
   {
-    const div = document.getElementById('editor');
-    div.innerHTML = "";
-    CreateListView(div);
-    UpdateEditor();
+  	if (showEditor)
+    {
+    	document.getElementById("editor").style.display = "block";
+    }
+    else
+    {
+    	document.getElementById("editor").style.display = "none";
+    }  
+ 	UpdateListView();
+    Goto(Active);
+    SaveBook();
   }
-  function SetDefault()
+  function LoadBook()
   {
-    	book = {};
-    	AddPage("start", "Knack Knack!\nDet knackar på dörren").Add("door", "öppna dörren").Add("window", "titta genom fönstret");
-		AddPage("door", "Ingen där!").Add("start", "stäng dörren");
-		AddPage("window", "Det står något stort utanför").Add("door", "öppna ändå");
-      Goto("start");
+  	var newBook = localStorage.getItem("book01");
+    if (newBook)
+    {
+    	book = JSON.parse(newBook);
+    }
   }
-	SetDefault();
-    SetupEditor();
+   function SaveBook()
+   {
+   	localStorage.setItem("book01", JSON.stringify(book, null, '\t'));
+   }
+  
+ function SaveBookJson()
+ {
+   var a = document.createElement("a");
+   var content = JSON.stringify(book, null, '\t');
+      a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
+  a.download = "demo.txt";
+  a.click();
+ }
+  LoadBook();
+  SetupEditor();
+  UpdateBook();
 </script>
 </body>
 </html>
