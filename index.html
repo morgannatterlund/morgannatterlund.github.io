@@ -131,14 +131,6 @@ a.click();
     var page = {};
     page.text = text;
     page.options = [];
-    page.Add = function(name, text)
-    {
-      var oprs = {};
-      oprs.text = text;
-      oprs.target = name;
-      page.options[page.options.length]  = oprs;
-      return page;
-    };
     book[name] = page;
     return page;
   }
@@ -150,15 +142,17 @@ a.click();
     }
   	Active = name;
     const div = document.getElementById('container');
-
+	div.innerHTML = "";
       const page = book[name];
-
+	if (page)
+    {
       div.innerHTML = page.text+"\n";
       
 	for (var i = 0; i < page.options.length; i++) {
           	let opts = page.options[i];
           div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
       }
+    }
   }
   function UpdateListView()
   {
@@ -205,8 +199,11 @@ a.click();
       add.className="small";
       add.onclick =function()
       {
-        page.Add(Object.keys(book)[0], "option");
-        UpdateBook();
+      	var oprs = {};
+      	oprs.text = "option";
+      	oprs.target = Object.keys(book)[0];
+      	page.options[page.options.length]  = oprs;
+      	UpdateBook();
       };
       for (let i = 0; i < page.options.length; i++) {
         let opts = page.options[i];
@@ -226,6 +223,8 @@ a.click();
         selectList.value = opts.target;
         x.value = opts.text;
         selectList.onchange = function(){
+          opts.target = selectList.value;
+          UpdateBook();
         };
         x.onchange = function(){
           opts.text = x.value;
