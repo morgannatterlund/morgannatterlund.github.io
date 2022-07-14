@@ -60,7 +60,7 @@ ul, #myUL {
  margin:1vw;
  background-color: #333333;
   color: #999999;
-    font-size:2vw;
+    font-size:3vw;
   }
   input{
   border: 0.5vw solid #999999; 
@@ -74,40 +74,24 @@ ul, #myUL {
  margin:1vw;
  background-color: #333333;
   color: #999999;
-    font-size:2vw;
+    font-size:3vw;
   }
   textarea {
   border: 0.5vw solid #333333; 
  	background-color: #999999;
   	color: #333333;
+    font-size:3vw;
 	}
   .footer {
   border: 0.5vw solid #999999; 
  background-color: #336633;
     }
 </style>
-<!--<input type="file" id="file-selector"\>
-<input type="button" onclick="SaveJson()" value="Save"\>
-const fileSelector = document.getElementById('file-selector');
-  fileSelector.addEventListener('change', (event) => {
-    const div = document.getElementById('container');
-    var fr=new FileReader();
-    fr.onload=function(){
-      div.innerHTML = fr.result;
-    }
-	fr.readAsText(event.target.files[0]);
-  });
- function SaveJson()
- {
- var a = document.createElement("a");
- var content = JSON.stringify(book, null, '\t');
-	a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
-a.download = "demo.txt";
-a.click();
- }
--->
 <input type="button" onclick="ToggleEditor()" value="editor"\>
 <div id="editor" class="footer">
+<input type="button" onclick="ExportBook()" value="export"\><input type="file" id="file-selector"\>
+<div id="treeView">
+</div>
 </div>
 <div id="container">
 </div>
@@ -246,7 +230,7 @@ a.click();
   }
   function SetupEditor()
   {
-    const div = document.getElementById('editor');
+    const div = document.getElementById('treeView');
     var ul = document.createElement("ul");
   	var add =document.createElement("input");
     var addBtn = document.createElement("button");
@@ -266,7 +250,16 @@ a.click();
     };
   	ul.id = "myUL";
    	add.type = "text";
-    
+    const fileSelector = document.getElementById('file-selector');
+    fileSelector.addEventListener('change', (event) => {
+      var fr=new FileReader();
+      fr.onload=function(){
+        book = JSON.parse(fr.result);
+        UpdateBook();         
+      }
+      fr.readAsText(event.target.files[0]);
+    });
+  
     UpdateListView();
   }
   function UpdateBook()
@@ -296,7 +289,7 @@ a.click();
    	localStorage.setItem("book01", JSON.stringify(book, null, '\t'));
    }
   
- function SaveBookJson()
+ function ExportBook()
  {
    var a = document.createElement("a");
    var content = JSON.stringify(book, null, '\t');
