@@ -86,6 +86,10 @@ ul, #myUL {
   border: 0.5vw solid #999999; 
  background-color: #336633;
     }
+  .active_page {
+ background-color: #336633;
+    }
+    
 </style>
 <input type="button" onclick="ToggleEditor()" value="editor"\>
 <div id="editor" class="footer">
@@ -148,14 +152,17 @@ ul, #myUL {
       let span = document.createElement("span");
       let ulInner = document.createElement("ul");
       let rem = document.createElement("button");
+      let gotoPage = document.createElement("button");
       let add = document.createElement("button");
       let textArea = document.createElement("textarea");
       let page = book[key];
+      li.appendChild(gotoPage);
       li.appendChild(span);
       li.appendChild(rem);
       li.appendChild(ulInner);
       ul.appendChild(li);
       ulInner.appendChild(textArea);
+      ulInner.appendChild(document.createElement("br"));
       ulInner.appendChild(add);
       ulInner.appendChild(document.createElement("br"));
       span.innerHTML = key;
@@ -169,10 +176,21 @@ ul, #myUL {
       ulInner.className="nested";
 
       textArea.value = page.text;
+      textArea.rows=5;
       textArea.onchange = function(){
         page.text = textArea.value;
         UpdateBook();
       };
+      gotoPage.innerHTML = "0";
+      gotoPage.className="small";
+      gotoPage.onclick = function() {
+        Active=key;
+        UpdateBook();
+      };
+      if (Active==key)
+      {
+      	gotoPage.classList.add("active_page");
+      }
       rem.innerHTML = "REM";
       rem.className="small";
       rem.onclick = function() {
