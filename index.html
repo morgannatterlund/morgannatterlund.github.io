@@ -1,416 +1,373 @@
 <!DOCTYPE html>
 <html>
-<body>
-<style>
-ul, #myUL {
-  list-style-type: none;
-}
-* Style the caret/arrow */
-.caret {
-  cursor: pointer;
-  user-select: none; /* Prevent text selection */
-}
-
-/* Create the caret/arrow with a unicode, and style it */
-.caret::before {
-  content: "\25B6";
-  color: #999999;
-  display: inline-block;
-  margin-right: 6px;
-}
-
-/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
-.caret-down::before {
-  transform: rotate(90deg);
-}
-
-/* Hide the nested list */
-.nested {
-  display: none;
-}
-
-/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
-.active {
-  display: block;
-}
-  body {
-  background-color: #000000;
-  color: #999999;
-   }
-   div{
-  white-space: pre-line;
-    font-size:8vw;
-  }
-  button{
-  border: 0.5vw solid #999999; 
- margin:1vw;
- background-color: #333333;
-  color: #999999;
-    font-size:8vw;
-  }
-  #myUL{
-  border: 0.5vw solid #999999; 
- margin:1vw;
- background-color: #333333;
-  color: #999999;
-    font-size:4vw;
-  }
-  .small{
-  border: 0.2vw solid #999999; 
- margin:1vw;
- background-color: #333333;
-  color: #999999;
-    font-size:3vw;
-  }
-  input{
-  border: 0.5vw solid #999999; 
- margin:1vw;
- background-color: #333333;
-  color: #999999;
-    font-size:4vw;
-  }
-  select{
-  border: 0.5vw solid #999999; 
- margin:1vw;
- background-color: #333333;
-  color: #999999;
-    font-size:3vw;
-  }
-  textarea {
-  border: 0.5vw solid #333333; 
- 	background-color: #999999;
-  	color: #333333;
-    font-size:3vw;
-    -webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
-    width:100%;
-	}
-  .footer {
-  border: 0.5vw solid #999999; 
-    font-size:4vw;
-    }
-  .active_page {
- background-color: #663333;
-    }
-    
-</style>
-<input type="button" onclick="ToggleEditor()" value="editor"\>
-<div id="editor">
-<fieldset class="footer">
-<legend>Library</legend>
-<div id="library">
-</div>
-</fieldset>
-<fieldset class="footer">
-<legend>Book</legend>
-<div id="treeView">
-</div>
-</fieldset>
-</div>
-<div id="container">
-</div>
-<script>
-  var library = {};
-  library.active = "";
-  library.books = {};
-  var book = {};
-  book.active = "";
-  book.pages = {};
-  var showEditor = true;
-  function ToggleEditor()
-  {
-  	showEditor = !showEditor;
-    UpdateBook();
-  }
-  function RemPage(name)
-  {
-  	delete book.pages[name];
-  }
-  function AddPage(name, text) 
-  {
-    if (book.pages[name])
-     return book.pages[name];
-    var page = {};
-    page.text = text;
-    page.options = [];
-    book.pages[name] = page;
-    return page;
-  }
-  function Goto(name) 
-  {
-  	if (book.pages[name])
-    {
-    	book.active = name;
-    }
-  	else if (!book.active)
-    {
-    	book.active = Object.keys(book.pages)[0];
-    }
-    const div = document.getElementById('container');
-	div.innerHTML = "";
-    const page = book.pages[book.active];
-	if (page)
-    {
-      div.innerHTML = page.text+"\n";
-      for (var i = 0; i < page.options.length; i++) {
-              let opts = page.options[i];
-            div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
-        }
-    }
-  }
-  function UpdateBookView()
-  {
-    if (!book)
-    	return;
-  	
-    const div = document.getElementById('treeView');
-    div.innerHTML = "";
-    
-    var ul = document.createElement("ul");
-  	var add =document.createElement("input");
-   	var bookName =document.createElement("input");
-   var addBtn = document.createElement("button");
-   
-  	let export_btn = document.createElement("button");
-    div.appendChild(bookName);
-    div.appendChild(export_btn);
-    div.appendChild(add);
-    div.appendChild(addBtn);
-    div.appendChild(ul);
-   
-   bookName.type="text";
-   
-    export_btn.className="small";
-   export_btn.innerHTML = "Export";
-    export_btn.onclick = function() {
-      ExportBook();
-    };
-    addBtn.innerHTML = "Add Page";
-    addBtn.className="small";
-    addBtn.onclick = function() {
-    	var name = add.value.trim();
-    	if (name.length)
-        {
-           	AddPage(name, "page");
-  			UpdateBook();          
-        }
-    };
-   	add.type = "text";
-
-
-    bookName.value = library.active;
-    bookName.onchange = function(){
-    	delete library.books[library.active];
-        library.books[bookName.value] = book;
-        library.active = bookName.value;
-        UpdateLibraryView();
-        UpdateBook();
-    };
-    
-    
-    ul.innerHTML = "";
-    for (let key in book.pages) 
-    {
-      let li = document.createElement("li");
-      let span = document.createElement("span");
-      let ulInner = document.createElement("ul");
-      let rem = document.createElement("button");
-      let gotoPage = document.createElement("button");
-      let add = document.createElement("button");
-      let textArea = document.createElement("textarea");
-      
-      
-      let page = book.pages[key];
-      li.appendChild(gotoPage);
-      li.appendChild(span);
-      li.appendChild(rem);
-      li.appendChild(ulInner);
-      ul.appendChild(li);
-      ulInner.appendChild(textArea);
-      ulInner.appendChild(document.createElement("br"));
-      ulInner.appendChild(add);
-      ulInner.appendChild(document.createElement("br"));
-      span.innerHTML = key;
-      span.className="caret";
-      let expand = function() { 
-        ulInner.classList.toggle("active");
-        span.classList.toggle("caret-down");
-        page.active = span.classList.contains("caret-down");
-      };
-      span.addEventListener("click", expand);
-      ulInner.className="nested";
-
-      textArea.value = page.text;
-      textArea.rows=5;
-      textArea.onchange = function(){
-        page.text = textArea.value;
-        UpdateBook();
-      };
-      gotoPage.innerHTML = "0";
-      gotoPage.className="small";
-      gotoPage.onclick = function() {
-        book.active=key;
-        UpdateBook();
-      };
-      if (book.active==key)
-      {
-      	gotoPage.classList.add("active_page");
+  <body>
+    <style>
+      ul,
+      #myUL {
+        list-style-type: none;
       }
-      rem.innerHTML = "REM";
-      rem.className="small";
-      rem.onclick = function() {
-        RemPage(key);
+      .caret {
+        cursor: pointer;
+        user-select: none; /* Prevent text selection */
+      }
+
+      .caret::before {
+        content: "\25B6";
+        color: #999999;
+        display: inline-block;
+        margin-right: 6px;
+      }
+
+      .caret-down::before {
+        transform: rotate(90deg);
+      }
+
+      .nested {
+        display: none;
+      }
+
+      .active {
+        display: block;
+      }
+      body {
+        background-color: #000000;
+        color: #999999;
+      }
+      div {
+        white-space: pre-line;
+        font-size: 8vw;
+      }
+      button {
+        border: 0.5vw solid #999999;
+        margin: 1vw;
+        background-color: #333333;
+        color: #999999;
+        font-size: 8vw;
+      }
+      #myUL {
+        border: 0.5vw solid #999999;
+        margin: 1vw;
+        background-color: #333333;
+        color: #999999;
+        font-size: 4vw;
+      }
+      .small {
+        border: 0.2vw solid #999999;
+        margin: 1vw;
+        background-color: #333333;
+        color: #999999;
+        font-size: 3vw;
+      }
+      input {
+        border: 0.5vw solid #999999;
+        margin: 1vw;
+        background-color: #333333;
+        color: #999999;
+        font-size: 4vw;
+      }
+      select {
+        border: 0.5vw solid #999999;
+        margin: 1vw;
+        background-color: #333333;
+        color: #999999;
+        font-size: 3vw;
+      }
+      textarea {
+        border: 0.5vw solid #333333;
+        background-color: #999999;
+        color: #333333;
+        font-size: 3vw;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        width: 100%;
+      }
+      .footer {
+        border: 0.5vw solid #999999;
+        font-size: 4vw;
+      }
+      .active_page {
+        background-color: #663333;
+      }
+    </style>
+    <input type="button" onclick="ToggleEditor()" value="editor" \ />
+    <div id="editor">
+      <fieldset class="footer">
+        <legend>Library</legend>
+        <div id="library"></div>
+      </fieldset>
+      <fieldset class="footer">
+        <legend>Book</legend>
+        <div id="treeView"></div>
+      </fieldset>
+    </div>
+    <div id="container"></div>
+    <script>
+      var library = {};
+      library.active = "";
+      library.books = {};
+      var book = {};
+      book.active = "";
+      book.pages = {};
+      var showEditor = true;
+      function ToggleEditor() {
+        showEditor = !showEditor;
         UpdateBook();
-      };
-      add.innerHTML = "ADD Option";
-      add.className="small";
-      add.onclick =function()
-      {
-      	var oprs = {};
-      	oprs.text = "option";
-      	oprs.target = "";
-      	page.options[page.options.length]  = oprs;
-      	UpdateBook();
-      };
-      for (let i = 0; i < page.options.length; i++) {
-        let opts = page.options[i];
-        let x = document.createElement("textarea");
+      }
+      function RemPage(name) {
+        delete book.pages[name];
+      }
+      function AddPage(name, text) {
+        if (book.pages[name]) return book.pages[name];
+        var page = {};
+        page.text = text;
+        page.options = [];
+        book.pages[name] = page;
+        return page;
+      }
+      function Goto(name) {
+        if (book.pages[name]) {
+          book.active = name;
+        } else if (!book.active) {
+          book.active = Object.keys(book.pages)[0];
+        }
+        const div = document.getElementById("container");
+        div.innerHTML = "";
+        const page = book.pages[book.active];
+        if (page) {
+          div.innerHTML = page.text + "\n";
+          for (var i = 0; i < page.options.length; i++) {
+            let opts = page.options[i];
+            div.innerHTML += "<button onclick=\"Goto('" + opts.target + "')\">" + opts.text + "</button>\n";
+          }
+        }
+      }
+      function UpdateBookView() {
+        if (!book) return;
+
+        const div = document.getElementById("treeView");
+        div.innerHTML = "";
+
+        var ul = document.createElement("ul");
+        var add = document.createElement("input");
+        var bookName = document.createElement("input");
+        var addBtn = document.createElement("button");
+
+        let export_btn = document.createElement("button");
+        div.appendChild(bookName);
+        div.appendChild(export_btn);
+        div.appendChild(add);
+        div.appendChild(addBtn);
+        div.appendChild(ul);
+
+        bookName.type = "text";
+
+        export_btn.className = "small";
+        export_btn.innerHTML = "Export";
+        export_btn.onclick = function () {
+          ExportBook();
+        };
+        addBtn.innerHTML = "Add Page";
+        addBtn.className = "small";
+        addBtn.onclick = function () {
+          var name = add.value.trim();
+          if (name.length) {
+            AddPage(name, "page");
+            UpdateBook();
+          }
+        };
+        add.type = "text";
+
+        bookName.value = library.active;
+        bookName.onchange = function () {
+          delete library.books[library.active];
+          library.books[bookName.value] = book;
+          library.active = bookName.value;
+          UpdateLibraryView();
+          UpdateBook();
+        };
+
+        ul.innerHTML = "";
+        for (let key in book.pages) {
+          let li = document.createElement("li");
+          let span = document.createElement("span");
+          let ulInner = document.createElement("ul");
+          let rem = document.createElement("button");
+          let gotoPage = document.createElement("button");
+          let add = document.createElement("button");
+          let textArea = document.createElement("textarea");
+
+          let page = book.pages[key];
+          li.appendChild(gotoPage);
+          li.appendChild(span);
+          li.appendChild(rem);
+          li.appendChild(ulInner);
+          ul.appendChild(li);
+          ulInner.appendChild(textArea);
+          ulInner.appendChild(document.createElement("br"));
+          ulInner.appendChild(add);
+          ulInner.appendChild(document.createElement("br"));
+          span.innerHTML = key;
+          span.className = "caret";
+          let expand = function () {
+            ulInner.classList.toggle("active");
+            span.classList.toggle("caret-down");
+            page.active = span.classList.contains("caret-down");
+          };
+          span.addEventListener("click", expand);
+          ulInner.className = "nested";
+
+          textArea.value = page.text;
+          textArea.rows = 5;
+          textArea.onchange = function () {
+            page.text = textArea.value;
+            UpdateBook();
+          };
+          gotoPage.innerHTML = "0";
+          gotoPage.className = "small";
+          gotoPage.onclick = function () {
+            book.active = key;
+            UpdateBook();
+          };
+          if (book.active == key) {
+            gotoPage.classList.add("active_page");
+          }
+          rem.innerHTML = "REM";
+          rem.className = "small";
+          rem.onclick = function () {
+            RemPage(key);
+            UpdateBook();
+          };
+          add.innerHTML = "ADD Option";
+          add.className = "small";
+          add.onclick = function () {
+            var oprs = {};
+            oprs.text = "option";
+            oprs.target = "";
+            page.options[page.options.length] = oprs;
+            UpdateBook();
+          };
+          for (let i = 0; i < page.options.length; i++) {
+            let opts = page.options[i];
+            let x = document.createElement("textarea");
+            let selectList = document.createElement("select");
+            let rem2 = document.createElement("button");
+            ulInner.appendChild(x);
+            ulInner.appendChild(selectList);
+            ulInner.appendChild(rem2);
+            ulInner.appendChild(document.createElement("br"));
+            for (let key2 in book.pages) {
+              let option = document.createElement("option");
+              option.value = key2;
+              option.text = key2;
+              selectList.appendChild(option);
+            }
+            selectList.value = opts.target;
+            x.value = opts.text;
+            selectList.onchange = function () {
+              opts.target = selectList.value;
+              UpdateBook();
+            };
+            x.onchange = function () {
+              opts.text = x.value;
+              UpdateBook();
+            };
+            rem2.innerHTML = "REM";
+            rem2.className = "small";
+            rem2.onclick = function () {
+              page.options.splice(i, 1);
+              UpdateBook();
+            };
+          }
+          if (page.active) {
+            expand();
+          }
+        }
+      }
+      function UpdateLibraryView() {
+        const libdiv = document.getElementById("library");
+        libdiv.innerHTML = "";
         let selectList = document.createElement("select");
-        let rem2 = document.createElement("button");
-        ulInner.appendChild(x);
-        ulInner.appendChild(selectList);
-        ulInner.appendChild(rem2);
-        ulInner.appendChild(document.createElement("br"));
-        for (let key2 in book.pages) {
+        let fileSelector = document.createElement("input");
+        libdiv.appendChild(selectList);
+        libdiv.appendChild(fileSelector);
+
+        for (let key2 in library.books) {
           let option = document.createElement("option");
           option.value = key2;
           option.text = key2;
           selectList.appendChild(option);
         }
-        selectList.value = opts.target;
-        x.value = opts.text;
-        selectList.onchange = function(){
-          opts.target = selectList.value;
-          UpdateBook();
-        };
-        x.onchange = function(){
-          opts.text = x.value;
-          UpdateBook();
-        };
-        rem2.innerHTML = "REM";
-        rem2.className="small";
-        rem2.onclick = function() {
-          page.options.splice(i,1);
-          UpdateBook();          
-        };
-
-      }
-      if (page.active)
-      {
-        expand();
-      }
-    }
-  }
-  function UpdateLibraryView()
-  {
-   	const libdiv = document.getElementById('library');
-    libdiv.innerHTML = "";
-  	let selectList = document.createElement("select");
-    let fileSelector = document.createElement('input');
-    libdiv.appendChild(selectList);
-    libdiv.appendChild(fileSelector);
-
-	for (let key2 in library.books) {
-      let option = document.createElement("option");
-      option.value = key2;
-      option.text = key2;
-      selectList.appendChild(option);
-    }
-    selectList.value = library.active;
-	selectList.onchange = function(){
+        selectList.value = library.active;
+        selectList.onchange = function () {
           library.active = selectList.value;
           book = library.books[library.active];
           UpdateBook();
-    };
-        
-    fileSelector.type = "file";
-    fileSelector.addEventListener('change', (event) => {
-      var fr=new FileReader();
-      fr.onload=function(){
-      	var path = event.target.files[0].name;
-  		AddBookAndActivate(path.substr(0, path.lastIndexOf('.')), JSON.parse(fr.result));
-         UpdateLibraryView();
-         UpdateBook();
+        };
+
+        fileSelector.type = "file";
+        fileSelector.addEventListener("change", (event) => {
+          var fr = new FileReader();
+          fr.onload = function () {
+            var path = event.target.files[0].name;
+            AddBookAndActivate(path.substr(0, path.lastIndexOf(".")), JSON.parse(fr.result));
+            UpdateLibraryView();
+            UpdateBook();
+          };
+          fr.readAsText(event.target.files[0]);
+        });
       }
-      fr.readAsText(event.target.files[0]);
-    });
-  }
-  function SetupEditor()
-  {
-  	UpdateLibraryView();
-    UpdateBookView();
-  }
-  function UpdateBook()
-  {
-  	if (showEditor)
-    {
-    	document.getElementById("editor").style.display = "block";
-    }
-    else
-    {
-    	document.getElementById("editor").style.display = "none";
-    }  
- 	UpdateBookView();
-    Goto(book.active);
-    SaveBook();
-  }
-  function AddBookAndActivate(name, data)
-  {
-  	book = data;
-    if (!book.pages)
-    {
-      var old = book;
-      book = {};
-      book.pages = old;
-      book.active = "";
-    }
-    library.books[name] = book;
-    library.active = name;
-  }
-  function LoadBook()
-  {
-  	var loadlibrary = localStorage.getItem("library");
-    if (!loadlibrary)
-    {
-    	var newBook = localStorage.getItem("book01");
-    	if (newBook)
-        {
-        	AddBookAndActivate("book01", JSON.parse(newBook));
+      function SetupEditor() {
+        UpdateLibraryView();
+        UpdateBookView();
+      }
+      function UpdateBook() {
+        if (showEditor) {
+          document.getElementById("editor").style.display = "block";
+        } else {
+          document.getElementById("editor").style.display = "none";
         }
-    }
-    else
-    {
-      library = JSON.parse(loadlibrary);
-	  book = library.books[library.active];
-    }
-  }
-   function SaveBook()
-   {
-   	localStorage.setItem("library", JSON.stringify(library, null, '\t'));
-   }
-  
- function ExportBook()
- {
-   var a = document.createElement("a");
-   var content = JSON.stringify(book, null, '\t');
-      a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
-  a.download = book.name + ".txt";
-  a.click();
- }
-  LoadBook();
-  SetupEditor();
-  UpdateBook();
-</script>
-</body>
+        UpdateBookView();
+        Goto(book.active);
+        SaveBook();
+      }
+      function AddBookAndActivate(name, data) {
+        book = data;
+        if (!book.pages) {
+          var old = book;
+          book = {};
+          book.pages = old;
+          book.active = "";
+        }
+        library.books[name] = book;
+        library.active = name;
+      }
+      function LoadBook() {
+        var loadlibrary = localStorage.getItem("library");
+        if (!loadlibrary) {
+          var newBook = localStorage.getItem("book01");
+          if (newBook) {
+            AddBookAndActivate("book01", JSON.parse(newBook));
+          }
+        } else {
+          library = JSON.parse(loadlibrary);
+          book = library.books[library.active];
+        }
+      }
+      function SaveBook() {
+        localStorage.setItem("library", JSON.stringify(library, null, "\t"));
+      }
+
+      function ExportBook() {
+        var a = document.createElement("a");
+        var content = JSON.stringify(book, null, "\t");
+        a.href = window.URL.createObjectURL(new Blob([content], { type: "text/plain" }));
+        a.download = book.name + ".txt";
+        a.click();
+      }
+      LoadBook();
+      SetupEditor();
+      UpdateBook();
+    </script>
+  </body>
 </html>
