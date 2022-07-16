@@ -34,7 +34,6 @@
         color: #999999;
       }
       div {
-        white-space: pre-line;
         font-size: 8vw;
       }
       button {
@@ -135,10 +134,10 @@
         div.innerHTML = "";
         const page = book.pages[book.active];
         if (page) {
-          div.innerHTML = page.text + "\n";
+          div.innerHTML = page.text + "<br/>";
           for (var i = 0; i < page.options.length; i++) {
             let opts = page.options[i];
-            div.innerHTML += "<button onclick=\"Goto('" + opts.target + "')\">" + opts.text + "</button>\n";
+            div.innerHTML += "<button onclick=\"Goto('" + opts.target + "')\">" + opts.text + "</button><br/>";
           }
         }
       }
