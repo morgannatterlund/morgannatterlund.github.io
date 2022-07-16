@@ -93,6 +93,7 @@ ul, #myUL {
 </style>
 <input type="button" onclick="ToggleEditor()" value="editor"\>
 <div id="editor" class="footer">
+<input type="text" id="bookName" value="bookName"\>
 <input type="button" onclick="ExportBook()" value="export"\><input type="file" id="file-selector"\>
 <div id="treeView">
 </div>
@@ -100,9 +101,13 @@ ul, #myUL {
 <div id="container">
 </div>
 <script>
+  var library = {};
+  library.active = "";
+  library.books = {};
   var book = {};
+  book.active = "";
+  book.pages = {};
   var showEditor = true;
-  var Active = "";
   function ToggleEditor()
   {
   	showEditor = !showEditor;
@@ -110,43 +115,54 @@ ul, #myUL {
   }
   function RemPage(name)
   {
-  	delete book[name];
+  	delete book.pages[name];
   }
   function AddPage(name, text) 
   {
-    if (book[name])
-     return book[name];
+    if (book.pages[name])
+     return book.pages[name];
     var page = {};
     page.text = text;
     page.options = [];
-    book[name] = page;
+    book.pages[name] = page;
     return page;
   }
   function Goto(name) 
   {
-  	if (!name || name==="")
+  	if (book.pages[name])
     {
-    	name = Object.keys(book)[0];
+    	book.active = name;
     }
-  	Active = name;
+  	else if (!book.active)
+    {
+    	book.active = Object.keys(book.pages)[0];
+    }
     const div = document.getElementById('container');
 	div.innerHTML = "";
-      const page = book[name];
+    const page = book.pages[book.active];
 	if (page)
     {
       div.innerHTML = page.text+"\n";
-      
-	for (var i = 0; i < page.options.length; i++) {
-          	let opts = page.options[i];
-          div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
-      }
+      for (var i = 0; i < page.options.length; i++) {
+              let opts = page.options[i];
+            div.innerHTML += "<button onclick=\"Goto('"+opts.target+"')\">"+opts.text+"</button>\n";
+        }
     }
   }
   function UpdateListView()
   {
+  
+    const bookName = document.getElementById('bookName');
+    bookName.value = book.name;
+    bookName.onchange = function(){
+      book.name = bookName.value;
+      SaveBook();
+    };
+    
+    
     const ul = document.getElementById('myUL');
     ul.innerHTML = "";
-    for (let key in book) 
+    for (let key in book.pages) 
     {
       let li = document.createElement("li");
       let span = document.createElement("span");
@@ -155,7 +171,7 @@ ul, #myUL {
       let gotoPage = document.createElement("button");
       let add = document.createElement("button");
       let textArea = document.createElement("textarea");
-      let page = book[key];
+      let page = book.pages[key];
       li.appendChild(gotoPage);
       li.appendChild(span);
       li.appendChild(rem);
@@ -184,10 +200,10 @@ ul, #myUL {
       gotoPage.innerHTML = "0";
       gotoPage.className="small";
       gotoPage.onclick = function() {
-        Active=key;
+        book.active=key;
         UpdateBook();
       };
-      if (Active==key)
+      if (book.active==key)
       {
       	gotoPage.classList.add("active_page");
       }
@@ -203,7 +219,7 @@ ul, #myUL {
       {
       	var oprs = {};
       	oprs.text = "option";
-      	oprs.target = Object.keys(book)[0];
+      	oprs.target = "";
       	page.options[page.options.length]  = oprs;
       	UpdateBook();
       };
@@ -291,20 +307,38 @@ ul, #myUL {
     	document.getElementById("editor").style.display = "none";
     }  
  	UpdateListView();
-    Goto(Active);
+    Goto(book.active);
     SaveBook();
   }
   function LoadBook()
   {
-  	var newBook = localStorage.getItem("book01");
-    if (newBook)
+  	var loadlibrary = localStorage.getItem("library");
+    if (!loadlibrary)
     {
-    	book = JSON.parse(newBook);
+    	var newBook = localStorage.getItem("book01");
+    	if (newBook)
+        {
+        	book = JSON.parse(newBook);
+            if (!book.pages)
+            {
+                var old = book;
+                book = {};
+                book.pages = old;
+                book.active = "";
+            }
+        	library.books["book01"] = book;
+            library.active = "book01";
+        }
+    }
+    else
+    {
+      library = JSON.parse(loadlibrary);
+	  book = library.books[library.active];
     }
   }
    function SaveBook()
    {
-   	localStorage.setItem("book01", JSON.stringify(book, null, '\t'));
+   	localStorage.setItem("library", JSON.stringify(library, null, '\t'));
    }
   
  function ExportBook()
@@ -312,7 +346,7 @@ ul, #myUL {
    var a = document.createElement("a");
    var content = JSON.stringify(book, null, '\t');
       a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
-  a.download = "demo.txt";
+  a.download = book.name + ".txt";
   a.click();
  }
   LoadBook();
