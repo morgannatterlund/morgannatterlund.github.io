@@ -81,22 +81,32 @@ ul, #myUL {
  	background-color: #999999;
   	color: #333333;
     font-size:3vw;
+    -webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+    width:100%;
 	}
   .footer {
   border: 0.5vw solid #999999; 
- background-color: #336633;
+    font-size:4vw;
     }
   .active_page {
- background-color: #336633;
+ background-color: #663333;
     }
     
 </style>
 <input type="button" onclick="ToggleEditor()" value="editor"\>
-<div id="editor" class="footer">
-<input type="text" id="bookName" value="bookName"\>
-<input type="button" onclick="ExportBook()" value="export"\><input type="file" id="file-selector"\>
+<div id="editor">
+<fieldset class="footer">
+<legend>Library</legend>
+<div id="library">
+</div>
+</fieldset>
+<fieldset class="footer">
+<legend>Book</legend>
 <div id="treeView">
 </div>
+</fieldset>
 </div>
 <div id="container">
 </div>
@@ -149,18 +159,56 @@ ul, #myUL {
         }
     }
   }
-  function UpdateListView()
+  function UpdateBookView()
   {
-  
-    const bookName = document.getElementById('bookName');
-    bookName.value = book.name;
+    if (!book)
+    	return;
+  	
+    const div = document.getElementById('treeView');
+    div.innerHTML = "";
+    
+    var ul = document.createElement("ul");
+  	var add =document.createElement("input");
+   	var bookName =document.createElement("input");
+   var addBtn = document.createElement("button");
+   
+  	let export_btn = document.createElement("button");
+    div.appendChild(bookName);
+    div.appendChild(export_btn);
+    div.appendChild(add);
+    div.appendChild(addBtn);
+    div.appendChild(ul);
+   
+   bookName.type="text";
+   
+    export_btn.className="small";
+   export_btn.innerHTML = "Export";
+    export_btn.onclick = function() {
+      ExportBook();
+    };
+    addBtn.innerHTML = "Add Page";
+    addBtn.className="small";
+    addBtn.onclick = function() {
+    	var name = add.value.trim();
+    	if (name.length)
+        {
+           	AddPage(name, "page");
+  			UpdateBook();          
+        }
+    };
+   	add.type = "text";
+
+
+    bookName.value = library.active;
     bookName.onchange = function(){
-      book.name = bookName.value;
-      SaveBook();
+    	delete library.books[library.active];
+        library.books[bookName.value] = book;
+        library.active = bookName.value;
+        UpdateLibraryView();
+        UpdateBook();
     };
     
     
-    const ul = document.getElementById('myUL');
     ul.innerHTML = "";
     for (let key in book.pages) 
     {
@@ -171,6 +219,8 @@ ul, #myUL {
       let gotoPage = document.createElement("button");
       let add = document.createElement("button");
       let textArea = document.createElement("textarea");
+      
+      
       let page = book.pages[key];
       li.appendChild(gotoPage);
       li.appendChild(span);
@@ -232,7 +282,7 @@ ul, #myUL {
         ulInner.appendChild(selectList);
         ulInner.appendChild(rem2);
         ulInner.appendChild(document.createElement("br"));
-        for (let key2 in book) {
+        for (let key2 in book.pages) {
           let option = document.createElement("option");
           option.value = key2;
           option.text = key2;
@@ -262,39 +312,44 @@ ul, #myUL {
       }
     }
   }
-  function SetupEditor()
+  function UpdateLibraryView()
   {
-    const div = document.getElementById('treeView');
-    var ul = document.createElement("ul");
-  	var add =document.createElement("input");
-    var addBtn = document.createElement("button");
-    div.innerHTML = "";
-    div.appendChild(add);
-    div.appendChild(addBtn);
-    div.appendChild(ul);
-    addBtn.innerHTML = "ADD";
-    addBtn.className="small";
-    addBtn.onclick = function() {
-    	var name = add.value.trim();
-    	if (name.length)
-        {
-           	AddPage(name, "page");
-  			UpdateBook();          
-        }
+   	const libdiv = document.getElementById('library');
+    libdiv.innerHTML = "";
+  	let selectList = document.createElement("select");
+    let fileSelector = document.createElement('input');
+    libdiv.appendChild(selectList);
+    libdiv.appendChild(fileSelector);
+
+	for (let key2 in library.books) {
+      let option = document.createElement("option");
+      option.value = key2;
+      option.text = key2;
+      selectList.appendChild(option);
+    }
+    selectList.value = library.active;
+	selectList.onchange = function(){
+          library.active = selectList.value;
+          book = library.books[library.active];
+          UpdateBook();
     };
-  	ul.id = "myUL";
-   	add.type = "text";
-    const fileSelector = document.getElementById('file-selector');
+        
+    fileSelector.type = "file";
     fileSelector.addEventListener('change', (event) => {
       var fr=new FileReader();
       fr.onload=function(){
-        book = JSON.parse(fr.result);
-        UpdateBook();         
+      	var path = event.target.files[0].name;
+  		AddBookAndActivate(path.substr(0, path.lastIndexOf('.')), JSON.parse(fr.result));
+         UpdateLibraryView();
+         UpdateBook();
       }
       fr.readAsText(event.target.files[0]);
     });
-  
-    UpdateListView();
+  }
+  function SetupEditor()
+  {
+  	UpdateLibraryView();
+    UpdateBookView();
   }
   function UpdateBook()
   {
@@ -306,9 +361,22 @@ ul, #myUL {
     {
     	document.getElementById("editor").style.display = "none";
     }  
- 	UpdateListView();
+ 	UpdateBookView();
     Goto(book.active);
     SaveBook();
+  }
+  function AddBookAndActivate(name, data)
+  {
+  	book = data;
+    if (!book.pages)
+    {
+      var old = book;
+      book = {};
+      book.pages = old;
+      book.active = "";
+    }
+    library.books[name] = book;
+    library.active = name;
   }
   function LoadBook()
   {
@@ -318,16 +386,7 @@ ul, #myUL {
     	var newBook = localStorage.getItem("book01");
     	if (newBook)
         {
-        	book = JSON.parse(newBook);
-            if (!book.pages)
-            {
-                var old = book;
-                book = {};
-                book.pages = old;
-                book.active = "";
-            }
-        	library.books["book01"] = book;
-            library.active = "book01";
+        	AddBookAndActivate("book01", JSON.parse(newBook));
         }
     }
     else
